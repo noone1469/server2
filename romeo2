@@ -1,0 +1,238 @@
+import pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score
+from scipy.stats import zscore
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 1. Visualize data using Matplotlib or Seaborn
+# Load the Iris dataset
+iris = load_iris(as_frame=True)
+df = iris.frame
+
+# Pairplot visualization
+sns.pairplot(df, hue='target')
+plt.suptitle("Pairplot of Iris Dataset", y=1.02)  # Title for Pairplot
+plt.show()
+
+# Histogram for a specific feature
+sns.histplot(df['sepal length (cm)'], kde=True)
+plt.title("Distribution of Sepal Length")
+plt.xlabel("Sepal Length (cm)")
+plt.ylabel("Frequency")
+plt.show()
+
+# 2. Extract data from websites using the Scrapy framework (Example code for Scrapy usage, not executed here)
+"""
+# Create a Scrapy project with the following command:
+# scrapy startproject example_project
+
+# Create a spider to extract data:
+# scrapy genspider example_spider example.com
+
+# Implement the spider in the example_spider.py file:
+import scrapy
+"""
+#Code of scrapy
+
+"""
+#Code on Command Prompt
+scrapy startproject my_scraper
+cd my_scraper
+#output 
+#A Scraper files are created
+ 
+import scrapy
+class AmazonSpider(scrapy.Spider):
+    name = "amazon"
+    start_urls = ['https://www.amazon.in/s?k=moto']
+
+    def parse(self, response):
+        # Extract data using correct CSS selectors
+        for item in response.css('div.s-main-slot div.s-result-item'):
+            yield {
+                'title': item.css('span.a-size-medium.a-color-base.a-text-normal::text').get(),
+                'link': response.urljoin(item.css('a.a-link-normal.s-no-outline::attr(href)').get()),
+                'price': item.css('span.a-price span.a-offscreen::text').get(),
+                'rating': item.css('span.a-icon-alt::text').get(),
+                'reviews': item.css('span.a-size-base::text').get(),
+            }
+
+#Run the spider on terminal
+scrapy crawl quotes
+#Run the code to store the data in json file
+scrapy crawl quotes -o output.json
+"""
+
+# 3. Load a dataset and explore its structure
+print("First few rows of the dataset:")
+print(df.head())
+print("\nDataset Info:")
+print(df.info())
+print("\nStatistical Summary:")
+print(df.describe())
+
+# 4. Linear mappings and matrix operations in Python
+matrix_a = np.array([[1, 2], [3, 4]])
+matrix_b = np.array([[5, 6], [7, 8]])
+result = np.dot(matrix_a, matrix_b)
+print("\nMatrix Multiplication Result:")
+print(result)
+
+# 5. Preprocessing techniques to manipulate and rescale data
+scaler = StandardScaler()
+df_scaled = df.copy()
+df_scaled[iris.feature_names] = scaler.fit_transform(df_scaled[iris.feature_names])
+print("\nScaled Data Sample:")
+print(df_scaled.head())
+
+# 6. Create visualizations with Matplotlib and Seaborn
+sns.boxplot(data=df, orient='h')
+plt.title("Boxplot of Iris Features")
+plt.show()
+
+# 7. Recognize and address Simpson’s Paradox in datasets (Hypothetical Explanation)
+"""
+Simpson's Paradox Example:
+Group A and Group B both show a higher success rate than Group C in a segmented analysis.
+However, when combined, Group C shows a higher overall success rate. This occurs due to
+unequal group sizes or distribution shifts.
+
+Addressing it:
+- Aggregate data carefully and consider confounding factors.
+- Analyze data across multiple levels of segmentation.
+"""
+
+
+data = {
+    'Group': ['A', 'A', 'B', 'B'],
+    'Category': ['X', 'Y', 'X', 'Y'],
+    'Attempts': [50, 50, 100, 100],
+    'Successes': [40, 10, 80, 50],
+}
+
+df = pd.DataFrame(data)
+df['Success Rate'] = df['Successes'] / df['Attempts']
+print(df)
+overall_success_rate = df['Successes'].sum() / df['Attempts'].sum()
+print(f"Overall Success Rate: {overall_success_rate:.2f}")
+
+group_success_rate = df.groupby('Group').apply(
+    lambda g: g['Successes'].sum() / g['Attempts'].sum()
+)
+print("Group Success Rates:")
+print(group_success_rate)
+ 
+
+plt.figure(figsize=(10, 6))
+sns.barplot(data=df, x='Group', y='Success Rate', hue='Category', palette='viridis')
+plt.title("Group and Category Success Rates")
+plt.ylabel("Success Rate")
+plt.show()
+
+plt.figure(figsize=(10, 6))
+sns.barplot(x=group_success_rate.index, y=group_success_rate.values, palette='coolwarm')
+
+plt.title("Overall Success Rate by Group")
+plt.ylabel("Success Rate")
+plt.show()
+
+ 
+ 
+weighted_success_rate = df.groupby('Group').apply(
+    lambda g: np.average(g['Success Rate'], weights=g['Attempts'])
+)
+print("Weighted Success Rates:")
+print(weighted_success_rate)
+plt.figure(figsize=(10, 6))
+sns.barplot(x=weighted_success_rate.index, y=weighted_success_rate.values, palette='crest')
+plt.title("Weighted Success Rates by Group")
+plt.ylabel("Weighted Success Rate")
+plt.show()
+
+
+
+
+# 8. Implement and understand the k-NN algorithm
+# Load the Iris dataset
+iris = load_iris(as_frame=True)
+df = iris.frame
+
+# Rename columns to match iris.feature_names
+df.columns = iris.feature_names + ['target']
+
+# Check for missing or invalid values in the feature columns
+print("\nInspecting data for non-numeric values:")
+print(df[iris.feature_names].applymap(type).apply(lambda col: col.unique()))
+
+# Drop rows with invalid data (e.g., non-numeric entries)
+df = df.dropna()  # Remove rows with NaN
+df = df[df[iris.feature_names].applymap(lambda x: isinstance(x, (int, float))).all(axis=1)]
+
+# Confirm data types
+print("\nData types after cleaning:")
+print(df.dtypes)
+
+# Assign feature variables (X) and target variable (y)
+X = df[iris.feature_names]
+y = df['target']
+
+# Standardize features for k-NN
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+# Initialize the k-NN classifier with k=3
+knn = KNeighborsClassifier(n_neighbors=3)
+
+# Train the classifier
+knn.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred_knn = knn.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred_knn)
+print("\nk-NN Accuracy:", accuracy)
+
+
+
+# 9. Visualize correlations with Seaborn’s heatmap and pairplot
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+plt.title("Heatmap of Feature Correlations")
+plt.show()
+
+sns.pairplot(df, hue='target')
+plt.suptitle("Pairplot of Iris Dataset (Repeated)", y=1.02)  # Title for Pairplot
+plt.show()
+
+# 10. Using Pandas library: Load and manipulate data using DataFrames
+# Example: Add a calculated column
+df['sepal_area'] = df['sepal length (cm)'] * df['sepal width (cm)']
+print("\nSample with Added Column:")
+print(df.head())
+
+
+# 11. Implement a simple spam filter using machine learning techniques (Naive Bayes Example)
+nb = GaussianNB()
+nb.fit(X_train, y_train)
+y_pred_nb = nb.predict(X_test)
+print("\nNaive Bayes Accuracy (Spam Filter Example):", accuracy_score(y_test, y_pred_nb))
+
+
+
+# 12. Use df.isna() and fillna() to clean missing values
+print("\nMissing Values Before Cleaning:")
+print(df.isna().sum())
+
+# Example: Fill missing values (if any)
+df.fillna(df.mean(), inplace=True)
+print("Missing Values After Cleaning:")
+print(df.isna().sum())
